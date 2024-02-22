@@ -1,0 +1,72 @@
+MATCH (m:Movie)
+WHERE  toLower(m.title) STARTS WITH "a"
+RETURN m
+
+MATCH (m:Movie)
+WHERE m.released > 2000
+RETURN toUpper(m.title)
+
+MATCH (n:Movie) RETURN n LIMIT 25
+
+MATCH (m:Movie)
+RETURN m.roles
+
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)<-[:ACTED_IN]-(p1:Person)
+RETURN DISTINCT p.name, p1.name
+
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)<-[:ACTED_IN]-(p1:Person)
+RETURN p.name, p1.name
+
+MATCH (m:Movie)
+RETURN m
+ORDER BY m.released ASC
+
+
+MATCH (m:Person)
+RETURN m
+ORDER BY m.name ASC
+
+MATCH (m:Person)
+RETURN m.name, m.born
+ORDER BY m.born ASC
+
+MATCH (m:Movie)
+RETURN m
+LIMIT 5
+
+MATCH (m:Movie)
+RETURN m
+ORDER BY m.released DESC
+LIMIT 1
+
+MATCH (m:Movie)
+RETURN m
+ORDER BY m.released DESC
+LIMIT 1
+
+MATCH (m:Movie)
+RETURN m
+SKIP 20
+LIMIT 10
+
+MATCH (p:Person)-[:ACTED_IN]-(m:Movie)
+RETURN COUNT(DISTINCT p.name)
+
+MATCH (p:Person)-[:DIRECTED]-(m:Movie)
+RETURN COUNT(DISTINCT p.name)
+
+MATCH (p:Person)-[:ACTED_IN]-(m:Movie)
+where m.title "The Matrix"
+RETURN COUNT(DISTINCT p.name)
+
+MATCH (p:Person)-[:ACTED_IN]-(m:Movie)
+where m.title = "The Matrix"
+RETURN COUNT(DISTINCT p.name)
+
+MATCH (p:Person)-[:ACTED_IN]-(m:Movie)<-[:DIRECTED]-(q)
+where p.name = q.name
+RETURN COUNT(DISTINCT p.name)
+
+MATCH (p:Person)-[:ACTED_IN]-(m:Movie)<-[:DIRECTED]-(q)
+\where p = q
+RETURN COUNT(DISTINCT m.title)

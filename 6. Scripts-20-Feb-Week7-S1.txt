@@ -1,0 +1,12 @@
+// shortest path b/w two ppl 
+MATCH q = ShortestPath((p:Person{name: 'Rain'})-[*]-(p2:Person{name: 'Ben Miles'}))
+RETURN q
+
+// with the edge style/ relation with acted in
+MATCH q = ShortestPath((p:Person{name: 'Rain'})-[:ACTED_IN]-(p2:Person{name: 'Ben Miles'}))
+RETURN q
+
+// For all possible number of edges
+// n(n-1)/2
+MATCH (n:Movie)
+RETURN ((COUNT(n)*(COUNT(n)-1)) / 2)

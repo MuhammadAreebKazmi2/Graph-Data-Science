@@ -1,0 +1,65 @@
+CREATE
+
+// These are all comments
+MERGE creates new nodes if there does not exist a relation b/w 2 persons
+This makes it redundant since 2 duplicate nodes
+What we do now?
+- Match the two nodes
+- Then Merge
+e.g.
+MATCH P
+MATCH n
+MERGE (p)-[:KNOWS]->(n) // Instead of MERGE if we return, nothing happens since MATCH MATCH are AND conditions
+
+// if already knows relationship exists, and we merge, nothing happens
+
+// if we do MERGE MERGE, instead of match match
+// the nodes will be created in case they were not there
+
+
+UPDATE
+for SET and array properties
+// we can provide labels using SET as well
+We can assign more than 1 labels to a node
+// a person can be an employee as well
+
+
+REMOVE 
+can be used to remove the properties of a label or a label itself
+We can also SET the property of a label as NULL to remove the property
+
+DELETE
+can be used to delete either the node or the relationship 
+
+// IF a node has relationships, we cannot DELETE the node directly
+in order to do that, delete the node with relationships
+
+
+PRACTICE
+// 1
+CREATE (p:Person {name:'Daniel Kaluuya'})
+
+// 2
+MERGE (p:Person {name: 'Daniel Kaluuya'})
+MERGE (m:Movie {title: 'Get Out'})
+MERGE (p)-[:ACTED_IN]-(m)
+
+// verified it by
+MATCH (p:Person)-[:ACTED_IN]-(m:Movie)
+WHERE m.title = "Get Out"
+RETURN *
+
+
+MORE PRACTICE
+// 1 Adding actors in labe
+MATCH (p:Person)-[:ACTED_IN]-(m:Movie)
+SET p: Actor
+RETURN p
+
+// 2 Adding directors in label for directors
+MATCH (p:Person)-[:DIRECTED]-(m:Movie)
+SET p: DIRECTOR
+RETURN p
+
+
+

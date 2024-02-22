@@ -1,0 +1,84 @@
+Count -> aggregate query
+Count(*) and count(m) returns the movies count
+
+MATCH (m:Movie)-[:ACTED_IN]-(p:Person)
+RETURN Count(m)
+// returns 172 (movies are 38, persons 131)
+
+MATCH (p:Person)
+RETURN (p)
+
+MATCH (m:Movie)
+RETURN Count(m)
+
+MATCH (m:Movie)
+RETURN Count(*)
+// Count(*) returns the instances so same as m
+
+// Count slide task
+
+// 1 movies where Tom Hanks acted
+MATCH (m:Movie)-[:ACTED_IN]-(p:Person {name: 'Tom Hanks'})
+RETURN count(m)
+
+// 2 movies released in 2000
+MATCH (m:Movie)
+WHERE m.released=2000
+RETURN count(m)
+
+// 3 Number of movies for each actor?
+MATCH (m:Movie)-[:ACTED_IN]-(p:Person)
+RETURN p.name, count(m)
+// noticed something? RETURN is acting here as GROUP BY in SQL
+
+// 4 Output of the following?
+MATCH (a:Person)-[:ACTED_IN]-(m:Movie)-[:DIRECTED]-(d:Person)
+RETURN a.name, d.name,
+count(*) AS numMovies
+ORDER BY numMovies DESC
+// actor and director acted in same movies
+
+// jinho ne saath kaam mia hai
+MATCH (a:Person)-[:ACTED_IN]-(m:Movie)-[:DIRECTED]-(d:Person)
+RETURN a.name, d.name
+
+// Actors with more than 5 movies
+MATCH (a:Person)-[:ACTED_IN]-(m:Movie)
+WITH a, count(m) AS movieCount
+WHERE movieCount > 5
+RETURN count(a) AS Actors_With_More_Than_5_Movie
+
+// those actors who acted in more than 5 movies
+MATCH (a:Person)-[:ACTED_IN]-(m:Movie)
+WITH a, count(m) AS movieCount
+WHERE movieCount > 5
+RETURN a.name
+
+// Average movies count
+MATCH (a:Person)-[:ACTED_IN]-(m:Movie)
+WITH a, count(m) AS movieCount
+RETURN AVG(movieCount)
+
+// average number of movies after 2010
+MATCH (m:Movie)
+WITH m, count(m) AS movieCount
+WHERE m.released>2010
+RETURN m.released ,AVG(movieCount)
+
+// for plan seeing
+PROFILE MATCH (m:Movie)
+WITH m, count(m) AS movieCount
+WHERE m.released>1900
+RETURN m.released, (movieCount)
+
+// returns actors as a list
+MATCH (m:Movie)-[:ACTED_IN]-(p:Person)
+RETURN m.title AS Movie, collect(p.name) AS Actors
+
+// returning roles Tom Hanks has worked as
+MATCH (p:Person {name: 'Tom Hanks'})-[x]-(m:Movie)
+WITH p, collect(x.roles) AS ROLESs
+RETURN p.name, ROLESs
+
+// cast size
+check it

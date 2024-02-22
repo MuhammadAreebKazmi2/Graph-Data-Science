@@ -1,0 +1,34 @@
+// MOVIE DATA
+
+// LOAD CSV WITH HEADERS FROM "file:///user.csv" as row
+// MERGE (u:User {userId: row.UserId, userName: row.UserName})
+
+// LOAD CSV WITH HEADERS FROM "file:///movie.csv" as r
+// MERGE (m:Movie {movieId: r.MovieId, movieName: r.MovieName})
+
+// LOAD CSV WITH HEADERS FROM "file:///user-watch-movie-history.csv" as edge
+// MERGE (m:Movie{movieId: edge.MovieId})
+// MERGE (u:User{userId: edge.UserId})
+// MERGE (u) - [:WATCHED] -> (m)
+
+// MATCH (m:Movie)
+// SET m.title = m.movieName
+
+// MATCH (m:Movie)
+// RETURN (m)
+
+// ITEMS DATA
+
+// LOAD CSV WITH HEADERS FROM "file:///items.csv" as row
+// MERGE (i:Item {itemId: row.id, itemName: row.name})
+
+// LOAD CSV WITH HEADERS FROM "file:///users_orders.csv" as r
+// MERGE (u:userOrder{userId: r.user_id})
+// MERGE (o:Orders{orderId: r.order_id})
+// MERGE (u) - [:ORDERS] -> (o)
+
+// match(u:userOrder) - [:ORDERS] -> (o:Orders)
+// return *
+
+MATCH (u:User{userName:'Alice'}) -[:WATCHED] -> (m1:Movie) <- [:WATCHED] - (u2:User) -[:WATCHED] -> (m2:Movie)
+RETURN m2;
