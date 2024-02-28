@@ -1,0 +1,26 @@
+// ** Content for mid will be till last week (Week 7) **
+// *** A4 double sided cheat sheet will be allowed
+// ** Graph Data Modelling, Graph Stats, and Cypher Queries
+
+// If I have all links connected with my neighbors at a specific node 
+// \-> this means we form a complete graph with my neighbors 
+
+// The coefficient query in file 7 holds the Clustering Coefficient
+
+// cc(i) = L / ((ki(ki-1)) / 2)
+// where cc = Clustering Coeff
+// ki is the degree of nodes
+// L is the number of links
+// i is the node
+
+// Average path length checks the start<>end so the start end are not similar (loop)
+
+
+// Lecture slide notes
+// in the register
+
+// Syntax for unique user id
+CREATE CONSTRAINT user_id_unique 
+IF NOT EXISTS
+FOR (x:User)
+REQUIRE x.user_id_unique 
