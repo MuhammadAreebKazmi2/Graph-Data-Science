@@ -11,21 +11,21 @@ This query identifies the district with the most cases reported and then finds t
 // 9) What gender is most affected by the crimes in the hotbed?
 // 10) What descent is most affected by the crimes in the hotbed?
 // 11) What age/average is most affected by the crimes in the hotbed?
-// 9) What is the weapon used in most crimes/cases?
-// 10) Where did the most cases took place precisely (location based)?
-// 11) Where did the most cases took place at what street (street based)?
-// 12) The type of crimes most recurrent at those streets
-// 13) The premise type of those places of crime?
-// 14) Any queries that could use of the triangle property and queries.
-// 15) What crimes at what premis and the use of what weapons is the most common in an area/district?
-// 16) What crimes at what premis and the use of what weapons is the most common in an against a gender/ethnic group?
-// 17) Which crime is mostly committed against victims of one descent?
-// 18) Which crime is mostly committed against victims of one age?
-// 19) Which weapon is mostly used against victims of one age?
-// 20) Which weapon is mostly used against victims of one descent?
-// 21) What crimes reported in the hotbed district happened on the same date?
-// 22) What was the average delay for the cases to be reported in the hotbed district?
-// 23) What Area/neighborhood is the hotbed of crimes?
+// 12) What is the weapon used in most crimes/cases?
+// 13) Where did the most cases took place precisely (location based)?
+// 14) Where did the most cases took place at what street (street based)?
+// 15) The type of crimes most recurrent at those streets
+// 16) The premise type of those places of crime?
+// 17) Any queries that could use of the triangle property and queries.
+// 18) What crimes at what premis and the use of what weapons is the most common in an area/district?
+// 19) What crimes at what premis and the use of what weapons is the most common in an against a gender/ethnic group?
+// 20) Which crime is mostly committed against victims of one descent?
+// 21) Which crime is mostly committed against victims of one age?
+// 22) Which weapon is mostly used against victims of one age?
+// 23) Which weapon is mostly used against victims of one descent?
+// 24) What crimes reported in the hotbed district happened on the same date?
+// 25) What was the average delay for the cases to be reported in the hotbed district?
+// 26) What Area/neighborhood is the hotbed of crimes?
 
 
 // ************************* Q1 **************************************
@@ -219,40 +219,64 @@ RETURN avg(victimAge) AS AverageVictimAge;
 // ************************* end of Q11 **************************************
 
 
-// // *************************** Q3 **************************************
-// ************************* end of Q3 **************************************
+// // *************************** Q12 **************************************
+// ************************* end of Q12 **************************************
 
 
-// // *************************** Q3 **************************************
-// ************************* end of Q3 **************************************
+// // *************************** Q13 **************************************
+// ************************* end of Q13 **************************************
 
 
-// // *************************** Q3 **************************************
-// ************************* end of Q3 **************************************
+// // *************************** Q14 **************************************
+// ************************* end of Q14 **************************************
 
 
-// // *************************** Q3 **************************************
-// ************************* end of Q3 **************************************
+// // *************************** Q15 **************************************
+// ************************* end of Q15 **************************************
 
 
-// // *************************** Q3 **************************************
-// ************************* end of Q3 **************************************
+// // *************************** Q16 **************************************
+// ************************* end of Q16 **************************************
 
 
-// // *************************** Q3 **************************************
-// ************************* end of Q3 **************************************
+// // *************************** Q17 **************************************
+// ************************* end of Q17 **************************************
 
 
-// // *************************** Q3 **************************************
-// ************************* end of Q3 **************************************
+// // *************************** Q18 **************************************
+// ************************* end of Q18 **************************************
 
 
-// // *************************** Q3 **************************************
-// ************************* end of Q3 **************************************
+// // *************************** Q19 **************************************
+// ************************* end of Q19 **************************************
 
 
-// // *************************** Q3 **************************************
-// ************************* end of Q3 **************************************
+// // *************************** Q20 **************************************
+// ************************* end of Q20 **************************************
+
+
+// // *************************** Q21 **************************************
+// ************************* end of Q21 **************************************
+
+
+// // *************************** Q22 **************************************
+// ************************* end of Q22 **************************************
+
+
+// // *************************** Q23 **************************************
+// ************************* end of Q23 **************************************
+
+
+// // *************************** Q24 **************************************
+// ************************* end of Q24 **************************************
+
+
+// // *************************** Q25 **************************************
+// ************************* end of Q25 **************************************
+
+
+// // *************************** Q26 **************************************
+// ************************* end of Q26 **************************************
 
 
 //
