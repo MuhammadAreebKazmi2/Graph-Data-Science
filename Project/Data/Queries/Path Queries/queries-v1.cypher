@@ -11,21 +11,23 @@ This query identifies the district with the most cases reported and then finds t
 // 9) What gender is most affected by the crimes in the hotbed?
 // 10) What descent is most affected by the crimes in the hotbed?
 // 11) What age/average is most affected by the crimes in the hotbed?
-// 12) What is the weapon used in most crimes/cases?
-// 13) Where did the most cases took place precisely (location based)?
-// 14) Where did the most cases took place at what street (street based)?
-// 15) The type of crimes most recurrent at those streets
-// 16) The premise type of those places of crime?
-// 17) Any queries that could use of the triangle property and queries.
-// 18) What crimes at what premis and the use of what weapons is the most common in an area/district?
-// 19) What crimes at what premis and the use of what weapons is the most common in an against a gender/ethnic group?
-// 20) Which crime is mostly committed against victims of one descent?
-// 21) Which crime is mostly committed against victims of one age?
-// 22) Which weapon is mostly used against victims of one age?
-// 23) Which weapon is mostly used against victims of one descent?
-// 24) What crimes reported in the hotbed district happened on the same date?
-// 25) What was the average delay for the cases to be reported in the hotbed district?
-// 26) What Area/neighborhood is the hotbed of crimes?
+// 12) What is the weapon used in most cases in Los Angeles?
+// ** 13) ** What weapon is used in most cases in the hotbed district?
+// ** 14) **What weapon is used against people of the vulnerable descent in the hotbed district?
+// 15) Where did the most cases took place precisely (location based)?
+// 16) Where did the most cases occur in what area?
+// ** 17) **The type of crimes most recurrent at those streets
+// 18) The premise type of those places of most cases reported at the hotbed location?
+// 19) The premise type where most cases reported in Los Angeles?
+// ** 20) **Any queries that could use of the triangle property and queries.
+// ** 21) **What crimes at what premis and the use of what weapons is the most common in an area/district?
+// ** 22) ** What crimes at what premis and the use of what weapons is the most common in an against a gender/ethnic group?
+// 23) Which crime is mostly committed against victims of one descent?
+// 24) Which crime is mostly committed against victims of one age?
+// 25) Which weapon is mostly used against victims of one age in Los Angeles?
+// 26) Which weapon is mostly used against victims of one descent in Los Angeles?
+// ** 27) What crimes reported in the hotbed district happened on the same date?
+// ** 28) What was the average delay for the cases to be reported in the hotbed district?
 
 
 // ************************* Q1 **************************************
@@ -219,11 +221,22 @@ RETURN avg(victimAge) AS AverageVictimAge;
 // ************************* end of Q11 **************************************
 
 
-// // *************************** Q12 **************************************
+// // *************************** Q12 ****************************************
+// Step 1: Calculate the maximum number of cases in which any weapon was used
+MATCH (c:Case)-[:Committed_by]->(w:Weapon)
+WITH w.`Weapon Used Cd` AS weaponCode, w.`Weapon Desc` AS weaponDescription, count(c) AS caseCount
+WITH max(caseCount) AS maxCases
+
+// Step 2: Find the weapon(s) used in the maximum number of cases
+MATCH (c:Case)-[:Committed_by]->(w:Weapon)
+WITH w.`Weapon Used Cd` AS weaponCode, w.`Weapon Desc` AS weaponDescription, count(c) AS caseCount, maxCases
+WHERE caseCount = maxCases
+// Return the weapon code, weapon description, and the number of cases
+RETURN weaponCode AS WeaponCode, weaponDescription AS WeaponDescription, caseCount AS NumberOfCases;
 // ************************* end of Q12 **************************************
+// Weapon Cd: 400 || weaponDescription: "STRONG-ARM (HANDS, FIST, FEET OR BODILY FORCE)" || NumberOfCases: 4524 
 
-
-// // *************************** Q13 **************************************
+// // *************************** Q13 ****************************************
 // ************************* end of Q13 **************************************
 
 
@@ -231,24 +244,86 @@ RETURN avg(victimAge) AS AverageVictimAge;
 // ************************* end of Q14 **************************************
 
 
-// // *************************** Q15 **************************************
+// // *************************** Q15 ****************************************
+// Step 1: Calculate the maximum number of cases at any location
+MATCH (c:Case)-[:Occurs_at]->(l:Location)
+WITH l.`Location_id` AS locationID, count(c) AS caseCount
+// Calculate the maximum case count at any location
+WITH max(caseCount) AS maxCases
+
+// Step 2: Find the location(s) with the maximum number of cases and return the details
+MATCH (c:Case)-[:Occurs_at]->(l:Location)
+WITH l.`Location_id` AS locationID, l.`LOCATION` AS locationDescription, l.`LAT` AS latitude, l.`LON` AS longitude, count(c) AS caseCount, maxCases
+// Filter to include only locations with the maximum number of cases
+WHERE caseCount = maxCases
+// Return the location details and number of cases
+RETURN locationID AS LocationID, locationDescription AS LocationDescription, latitude AS Latitude, longitude AS Longitude, caseCount AS NumberOfCases;
 // ************************* end of Q15 **************************************
+// Loc ID: 6180 || LocationDescription: "700 S  HOPE                         ST" || NumberOfCases: 80
 
 
-// // *************************** Q16 **************************************
+// // *************************** Q16 ****************************************
+// Step 1: Calculate the maximum number of cases in any area
+MATCH (c:Case)-[:Occurs_in]->(a:Area)
+WITH a.`AREA` AS areaCode, a.`AREA NAME` AS areaName, count(c) AS caseCount
+// Calculate the maximum case count in any area
+WITH max(caseCount) AS maxCases
+
+// Step 2: Find the area with the maximum number of cases
+MATCH (c:Case)-[:Occurs_in]->(a:Area)
+WITH a.`AREA` AS areaCode, a.`AREA NAME` AS areaName, count(c) AS caseCount, maxCases
+// Filter to include only the area with the maximum number of cases
+WHERE caseCount = maxCases
+// Return the area code, area name, and the number of cases
+RETURN areaCode AS AreaCode, areaName AS AreaName, caseCount AS NumberOfCases;
 // ************************* end of Q16 **************************************
-
+// 
 
 // // *************************** Q17 **************************************
 // ************************* end of Q17 **************************************
 
 
-// // *************************** Q18 **************************************
+// // *************************** Q18 ****************************************
+// Step 1: Calculate the maximum number of cases at any location
+MATCH (c:Case)-[:Occurs_at]->(l:Location)
+WITH l.`Location_id` AS locationID, count(c) AS caseCount
+WITH max(caseCount) AS maxCases
+
+// Step 2: Find the locations with the maximum number of cases
+MATCH (c:Case)-[:Occurs_at]->(l:Location)
+WITH l.`Location_id` AS locationID, l, count(c) AS caseCount, maxCases
+WHERE caseCount = maxCases
+
+// Step 3: Find the most common premise type at those locations
+MATCH (c:Case)-[:Occurs_at]->(l), (c)-[:Involves_premise]->(p:Premise)
+WITH p.`Premis Cd` AS premiseCode, p.`Premis Desc` AS premiseDescription, count(c) AS premiseCount
+// Group by premise code and description, and count the number of cases
+WITH premiseCode, premiseDescription, premiseCount
+// Order by premise count in descending order
+ORDER BY premiseCount DESC
+LIMIT 1
+// Return the premise code, premise description, and the number of cases
+RETURN premiseCode AS PremiseCode, premiseDescription AS PremiseDescription, premiseCount AS NumberOfCases;
 // ************************* end of Q18 **************************************
+PremiseCode: 404 || PremiseDescription: "Dept Store" || NumberOfCases: 56
 
 
-// // *************************** Q19 **************************************
+// // *************************** Q19 ****************************************
+// Step 1: Calculate the maximum number of cases reported at any premise type
+MATCH (c:Case)-[:Involves_premise]->(p:Premise)
+WITH p.`Premis Cd` AS premiseCode, p.`Premis Desc` AS premiseDescription, count(c) AS caseCount
+// Calculate the maximum case count reported at any premise
+WITH max(caseCount) AS maxCases
+
+// Step 2: Find the premise type with the maximum number of cases reported
+MATCH (c:Case)-[:Involves_premise]->(p:Premise)
+WITH p.`Premis Cd` AS premiseCode, p.`Premis Desc` AS premiseDescription, count(c) AS caseCount, maxCases
+// Filter to include only the premise types with the maximum number of cases reported
+WHERE caseCount = maxCases
+// Return the premise code, premise description, and the number of cases reported
+RETURN premiseCode AS PremiseCode, premiseDescription AS PremiseDescription, caseCount AS NumberOfCases;
 // ************************* end of Q19 **************************************
+// PremiseCode: 101 || PremiseDescription: "Street" || NumberOfCasesL 9050
 
 
 // // *************************** Q20 **************************************
@@ -263,23 +338,94 @@ RETURN avg(victimAge) AS AverageVictimAge;
 // ************************* end of Q22 **************************************
 
 
-// // *************************** Q23 **************************************
+// // *************************** Q23 ****************************************
+// Step 1: Calculate the most common crime type committed against victims of each descent
+MATCH (c:Case)-[:Reported_by]->(v:Victim), (c)-[:Type]->(crime:Crime)
+WITH v.`Vict Descent` AS victimDescent, crime.`Crm Cd` AS crimeCode, crime.`Crm Cd Desc` AS crimeDescription, count(c) AS crimeCount
+// Group cases by victim descent, crime type, and count the number of cases for each
+WITH victimDescent, crimeCode, crimeDescription, crimeCount
+// Calculate the maximum crime count for each victim descent
+WITH victimDescent, max(crimeCount) AS maxCrimeCount
+// Filter the results to include only the most common crime type for each descent
+MATCH (c:Case)-[:Reported_by]->(v:Victim), (c)-[:Type]->(crime:Crime)
+WHERE v.`Vict Descent` = victimDescent
+WITH victimDescent, crime.`Crm Cd` AS crimeCode, crime.`Crm Cd Desc` AS crimeDescription, count(c) AS crimeCount, maxCrimeCount
+WHERE crimeCount = maxCrimeCount
+// Return the victim descent, crime code, crime description, and the number of cases
+RETURN victimDescent AS VictimDescent, crimeCode AS CrimeCode, crimeDescription AS CrimeDescription, crimeCount AS NumberOfCases
+ORDER BY NumberOfCases DESC
 // ************************* end of Q23 **************************************
+// W || 331 || "THEFT FROM MOTOR VEHICLE - GRAND ($950.01 AND OVER)" || NumberOfCases: 1905
 
-
-// // *************************** Q24 **************************************
+// // *************************** Q24 ****************************************
+// Step 1: Calculate the most frequent crime type committed against victims of each age
+MATCH (c:Case)-[:Reported_by]->(v:Victim), (c)-[:Type]->(crime:Crime)
+WITH v.`Vict Age` AS victimAge, crime.`Crm Cd` AS crimeCode, crime.`Crm Cd Desc` AS crimeDescription, count(c) AS crimeCount
+// Group cases by victim age, crime type, and count the number of cases for each
+WITH victimAge, crimeCode, crimeDescription, crimeCount
+// Calculate the maximum crime count for each victim age
+WITH victimAge, max(crimeCount) AS maxCrimeCount
+// Filter the results to include only the most common crime type for each age
+MATCH (c:Case)-[:Reported_by]->(v:Victim), (c)-[:Type]->(crime:Crime)
+WHERE v.`Vict Age` = victimAge
+WITH victimAge, crime.`Crm Cd` AS crimeCode, crime.`Crm Cd Desc` AS crimeDescription, count(c) AS crimeCount, maxCrimeCount
+WHERE crimeCount = maxCrimeCount
+// Return the victim age, crime code, crime description, and the number of cases
+RETURN victimAge AS VictimAge, crimeCode AS CrimeCode, crimeDescription AS CrimeDescription, crimeCount AS NumberOfCases;
 // ************************* end of Q24 **************************************
+// 36 || 331 || "THEFT FROM MOTOR VEHICLE - GRAND ($950.01 AND OVER)" || NumberOfCases: 143
 
-
-// // *************************** Q25 **************************************
+// // *************************** Q25 ***************************************
+// Step 1: Calculate the most frequently used weapon against victims of each age
+MATCH (c:Case)-[:Reported_by]->(v:Victim), (c)-[:Committed_by]->(w:Weapon)
+WITH v.`Vict Age` AS victimAge, w.`Weapon Used Cd` AS weaponCode, w.`Weapon Desc` AS weaponDescription, count(c) AS weaponCount
+// Group cases by victim age and weapon, and count the number of cases for each
+WITH victimAge, weaponCode, weaponDescription, weaponCount
+// Calculate the maximum weapon count for each victim age
+WITH victimAge, max(weaponCount) AS maxWeaponCount
+// Filter the results to include only the most commonly used weapon for each age
+MATCH (c:Case)-[:Reported_by]->(v:Victim), (c)-[:Committed_by]->(w:Weapon)
+WHERE v.`Vict Age` = victimAge
+WITH victimAge, w.`Weapon Used Cd` AS weaponCode, w.`Weapon Desc` AS weaponDescription, count(c) AS weaponCount, maxWeaponCount
+WHERE weaponCount = maxWeaponCount
+// Return the victim age, weapon code, weapon description, and the number of cases
+RETURN victimAge AS VictimAge, weaponCode AS WeaponCode, weaponDescription AS WeaponDescription, weaponCount AS NumberOfCases
+ORDER BY NumberOfCases DESC
 // ************************* end of Q25 **************************************
+// 30 | 400 || "STRONG-ARM (HANDS, FIST, FEET OR BODILY FORCE)" || NumberOfCases: 134
 
 
-// // *************************** Q26 **************************************
+// // *************************** Q26 ****************************************
+// Step 1: Calculate the most frequent weapon used against victims of each descent
+MATCH (c:Case)-[:Reported_by]->(v:Victim), (c)-[:Committed_by]->(w:Weapon)
+WITH v.`Vict Descent` AS victimDescent, w.`Weapon Used Cd` AS weaponCode, w.`Weapon Desc` AS weaponDescription, count(c) AS weaponCount
+// Group cases by victim descent, weapon, and count the number of cases for each
+WITH victimDescent, weaponCode, weaponDescription, weaponCount
+// Calculate the maximum weapon count for each victim descent
+WITH victimDescent, max(weaponCount) AS maxWeaponCount
+// Filter the results to include only the most commonly used weapon for each descent
+MATCH (c:Case)-[:Reported_by]->(v:Victim), (c)-[:Committed_by]->(w:Weapon)
+WHERE v.`Vict Descent` = victimDescent
+WITH victimDescent, w.`Weapon Used Cd` AS weaponCode, w.`Weapon Desc` AS weaponDescription, count(c) AS weaponCount, maxWeaponCount
+WHERE weaponCount = maxWeaponCount
+// Return the victim descent, weapon code, weapon description, and the number of cases
+RETURN victimDescent AS VictimDescent, weaponCode AS WeaponCode, weaponDescription AS WeaponDescription, weaponCount AS NumberOfCases
+ORDER BY NumberOfCases DESC
 // ************************* end of Q26 **************************************
+// H || 400 || "STRONG-ARM (HANDS, FIST, FEET OR BODILY FORCE)" || NumberOfCases: 2154
+
+// // *************************** Q27 ****************************************
+// // *************************** Q27 ****************************************
 
 
-//
+// // *************************** Q28 ****************************************
+// // *************************** Q28 ****************************************
+
+
+// // *************************** Q29 ****************************************
+// // *************************** Q29 ****************************************
+
+
 //
 //
 //
