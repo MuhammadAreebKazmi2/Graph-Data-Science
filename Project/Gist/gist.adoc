@@ -426,7 +426,8 @@ WITH max(caseCount) AS maxCases
 MATCH (c:Case)-[:Reported_in]->(d:District)
 WITH d, count(c) AS caseCount, maxCases
 WHERE caseCount = maxCases
-RETURN d.`Rpt Dist No` AS District, caseCount AS NumberOfCases;----
+RETURN d.`Rpt Dist No` AS District, caseCount AS NumberOfCases;
+----
 
 //output
 //table
@@ -491,7 +492,6 @@ CALL gds.graph.project(
 )
 ----
 
-== 
 //output
 //table
 
