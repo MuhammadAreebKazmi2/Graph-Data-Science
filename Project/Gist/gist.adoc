@@ -1,0 +1,499 @@
+= Crime Data Analysis
+:neo4j-version: 2.0.0-RC1
+:author: Muhammad Areeb Kazmi
+:tags: domain:criminal-justice, use-case:crime-analysis
+
+This interactive Neo4j graph gist covers the crime data analysis for Los-Angeles.
+
+'''
+
+*Table of Contents*
+
+* *Introduction*
+** <<introduction_to_problem, Introduction to Problem>>
+* *Scenario*
+** <<explanation of scenario, Explanation of Scenario>>
+** <<typical_scenario, Typical Scenario>>
+* *Solution*
+** <<explanation_of_solution, Explanation of Solution>>
+** <<how_graph_databases_can_help, How Graph Databases Can Help>>
+* *Data Model*
+** <<crime_data_model, LA Crime Graph Data Model>>
+* *Database Setup*
+** <<sample_data_set, Data Loading>>
+* *Cypher Queries*
+** <<entity_link_analysis, Path Queries>>
+** <<find_account_holders_who_share_more_than_one_piece_of_legitimate_contact_information, Projections Made>>
+** <<determine_the_financial_risk_of_a_possible_fraud_ring , Machine Learning>>
+
+'''
+
+== Introduction to Problem
+
+Traditional crime investigation methods can be time-consuming and labor-intensive, often relying on manual analysis of large datasets, where subtle connections between entities might not be identified and Relational Database Management Systems (RDBMS) might not be able to connect all the dots, thus this can lead to missed leads, incomplete investigations, and ultimately, unsolved crimes.  
+'''
+
+== Explanation of Scenario
+
+The project aims to capitalize the power of Graph Data Science to improve crime investigation. By analyzing the connections within the graph, we aim to achieve the following objectives: 
+
+* *Identifying potential witnesses*: By discovering non-suspects present at crime scenes, we could find potential witnesses that could help get meaningful intel. 
+* *Identifying crime hotspots*: By analyzing the frequency of specific crime types in different locations, we can identify areas with higher crime rates. 
+* *Identifying vulnerable communities*: By analyzing the links between people of different descent being targeted by certain weapons or crimes.
+
+=== Typical Scenario
+
+While the exact details behind each case vary from one case to the other, we can see a pattern: 
+
+* A crime being committed by same weapon time
+* A location being a hotspot for certain crimes
+* A victim of certain descent being targeted by a specific weapon.
+* A victim of certain descent is victim of a specific crime. 
+* A district being the hotbed of certain crimes.
+* A trend of certain weapons used and crimes being committed in a certain premise.
+
+'''
+
+== Explanation of Solution
+
+The graph database, using Neo4j, will help uncover new insights due to the links and properties to know crime patterns better and apply Graph Data Science instead of just mere analysis using Relational Database Model Systems (RDBMS).
+
+=== How Graph Databases Can Help
+
+Augmenting one’s existing crime data infrastructure to support police investigation can be done by running appropriate entity link analysis queries using a graph database, and running checks during key stages in the crime reporting lifecycle, such as:
+
+* When the case is being reported and weapon is unidentified.
+* When an anonymous case is filed against a certain crime and we want to know victim's details.
+* To find when a crime was actually committed.
+
+Real-time graph traversals tied to the right kinds of events can help the investigators find out the missing information well.
+
+'''
+
+== Crime Data Graph Data Model
+
+Graph databases have emerged as an ideal tool for overcoming these hurdles. Languages like Cypher provide a simple semantic for hot spots in the graph, navigating connections in memory, in real time. 
+
+The graph data model below represents how the data actually looks to the graph database:
+
+image::https://github.com/MuhammadAreebKazmi2/Graph-Data-Science/blob/main/Project/Graph-Data-Model.png[Graph Data Model]
+
+'''
+
+== Data Loading
+The user can load the data base from using the cleaned CSV file from https://github.com/MuhammadAreebKazmi2/Graph-Data-Science/blob/main/Project/Data/Crime_Data_from_2020_to_Present.csv and doing the other measures to loading the graph nodes using the query below: 
+
+//setup
+[source,cypher]
+----
+
+:param {
+  // Define the file path root and the individual file names required for loading.
+  // https://neo4j.com/docs/operations-manual/current/configuration/file-locations/
+  file_path_root: 'file:///', // Change this to the folder your script can access the files at.
+  file_0: 'Crime_Data_from_2020_to_Present.csv'
+};
+
+// CONSTRAINT creation
+// -------------------
+//
+// Create node uniqueness constraints, ensuring no duplicates for the given node label and ID property exist in the database. This also ensures no duplicates are introduced in future.
+//
+// NOTE: The following constraint creation syntax is generated based on the current connected database version 5.19-aura.
+CREATE CONSTRAINT `DR_NO_Case_uniq` IF NOT EXISTS
+FOR (n: `Case`)
+REQUIRE (n.`DR_NO`) IS UNIQUE;
+CREATE CONSTRAINT `Victim_id_Victim_uniq` IF NOT EXISTS
+FOR (n: `Victim`)
+REQUIRE (n.`Victim_id`) IS UNIQUE;
+CREATE CONSTRAINT `Premis_Cd_Premise_uniq` IF NOT EXISTS
+FOR (n: `Premise`)
+REQUIRE (n.`Premis Cd`) IS UNIQUE;
+CREATE CONSTRAINT `Weapon_Used Cd_Weapon_uniq` IF NOT EXISTS
+FOR (n: `Weapon`)
+REQUIRE (n.`Weapon Used Cd`) IS UNIQUE;
+CREATE CONSTRAINT `Location_id_Location_uniq` IF NOT EXISTS
+FOR (n: `Location`)
+REQUIRE (n.`Location_id`) IS UNIQUE;
+CREATE CONSTRAINT `Rpt_Dist No_District_uniq` IF NOT EXISTS
+FOR (n: `District`)
+REQUIRE (n.`Rpt Dist No`) IS UNIQUE;
+CREATE CONSTRAINT `AREA_Area_uniq` IF NOT EXISTS
+FOR (n: `Area`)
+REQUIRE (n.`AREA`) IS UNIQUE;
+CREATE CONSTRAINT `Crm_Cd_Crime_uniq` IF NOT EXISTS
+FOR (n: `Crime`)
+REQUIRE (n.`Crm Cd`) IS UNIQUE;
+
+:param {
+  idsToSkip: []
+};
+
+// NODE load
+// ---------
+//
+// Load nodes in batches, one node label at a time. Nodes will be created using a MERGE statement to ensure a node with the same label and ID property remains unique. Pre-existing nodes found by a MERGE statement will have their other properties set to the latest values encountered in a load file.
+//
+// NOTE: Any nodes with IDs in the 'idsToSkip' list parameter will not be loaded.
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row
+WHERE NOT row.`DR_NO` IN $idsToSkip AND NOT toInteger(trim(row.`DR_NO`)) IS NULL
+CALL {
+  WITH row
+  MERGE (n: `Case` { `DR_NO`: toInteger(trim(row.`DR_NO`)) })
+  SET n.`DR_NO` = toInteger(trim(row.`DR_NO`))
+  SET n.`Date Rptd` = row.`Date Rptd`
+  SET n.`DATE OCC` = row.`DATE OCC`
+  SET n.`TIME OCC` = toInteger(trim(row.`TIME OCC`))
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row
+WHERE NOT row.`Victim_id` IN $idsToSkip AND NOT toInteger(trim(row.`Victim_id`)) IS NULL
+CALL {
+  WITH row
+  MERGE (n: `Victim` { `Victim_id`: toInteger(trim(row.`Victim_id`)) })
+  SET n.`Victim_id` = toInteger(trim(row.`Victim_id`))
+  SET n.`Vict Age` = toInteger(trim(row.`Vict Age`))
+  SET n.`Vict Sex` = row.`Vict Sex`
+  SET n.`Vict Descent` = row.`Vict Descent`
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row
+WHERE NOT row.`Premis Cd` IN $idsToSkip AND NOT toInteger(trim(row.`Premis Cd`)) IS NULL
+CALL {
+  WITH row
+  MERGE (n: `Premise` { `Premis Cd`: toInteger(trim(row.`Premis Cd`)) })
+  SET n.`Premis Cd` = toInteger(trim(row.`Premis Cd`))
+  SET n.`Premis Desc` = row.`Premis Desc`
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row
+WHERE NOT row.`Weapon Used Cd` IN $idsToSkip AND NOT toInteger(trim(row.`Weapon Used Cd`)) IS NULL
+CALL {
+  WITH row
+  MERGE (n: `Weapon` { `Weapon Used Cd`: toInteger(trim(row.`Weapon Used Cd`)) })
+  SET n.`Weapon Used Cd` = toInteger(trim(row.`Weapon Used Cd`))
+  SET n.`Weapon Desc` = row.`Weapon Desc`
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row
+WHERE NOT row.`Location_id` IN $idsToSkip AND NOT toInteger(trim(row.`Location_id`)) IS NULL
+CALL {
+  WITH row
+  MERGE (n: `Location` { `Location_id`: toInteger(trim(row.`Location_id`)) })
+  SET n.`Location_id` = toInteger(trim(row.`Location_id`))
+  SET n.`LOCATION` = row.`LOCATION`
+  SET n.`LON` = toFloat(trim(row.`LON`))
+  SET n.`LAT` = toFloat(trim(row.`LAT`))
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row
+WHERE NOT row.`Rpt Dist No` IN $idsToSkip AND NOT toInteger(trim(row.`Rpt Dist No`)) IS NULL
+CALL {
+  WITH row
+  MERGE (n: `District` { `Rpt Dist No`: toInteger(trim(row.`Rpt Dist No`)) })
+  SET n.`Rpt Dist No` = toInteger(trim(row.`Rpt Dist No`))
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row
+WHERE NOT row.`AREA` IN $idsToSkip AND NOT toInteger(trim(row.`AREA`)) IS NULL
+CALL {
+  WITH row
+  MERGE (n: `Area` { `AREA`: toInteger(trim(row.`AREA`)) })
+  SET n.`AREA` = toInteger(trim(row.`AREA`))
+  SET n.`AREA NAME` = row.`AREA NAME`
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row
+WHERE NOT row.`Crm Cd` IN $idsToSkip AND NOT toInteger(trim(row.`Crm Cd`)) IS NULL
+CALL {
+  WITH row
+  MERGE (n: `Crime` { `Crm Cd`: toInteger(trim(row.`Crm Cd`)) })
+  SET n.`Crm Cd` = toInteger(trim(row.`Crm Cd`))
+  SET n.`Crm Cd Desc` = row.`Crm Cd Desc`
+} IN TRANSACTIONS OF 10000 ROWS;
+
+
+// RELATIONSHIP load
+// -----------------
+//
+// Load relationships in batches, one relationship type at a time. Relationships are created using a MERGE statement, meaning only one relationship of a given type will ever be created between a pair of nodes.
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Case` { `DR_NO`: toInteger(trim(row.`DR_NO`)) })
+  MATCH (target: `Area` { `AREA`: toInteger(trim(row.`AREA`)) })
+  MERGE (source)-[r: `Occurs_in`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Case` { `DR_NO`: toInteger(trim(row.`DR_NO`)) })
+  MATCH (target: `Location` { `Location_id`: toInteger(trim(row.`Location_id`)) })
+  MERGE (source)-[r: `Occurs_at`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Location` { `Location_id`: toInteger(trim(row.`Location_id`)) })
+  MATCH (target: `Area` { `AREA`: toInteger(trim(row.`AREA`)) })
+  MERGE (source)-[r: `Located_in`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Location` { `Location_id`: toInteger(trim(row.`Location_id`)) })
+  MATCH (target: `District` { `Rpt Dist No`: toInteger(trim(row.`Rpt Dist No`)) })
+  MERGE (source)-[r: `Belongs_to`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `District` { `Rpt Dist No`: toInteger(trim(row.`Rpt Dist No`)) })
+  MATCH (target: `Location` { `Location_id`: toInteger(trim(row.`Location_id`)) })
+  MERGE (source)-[r: `Includes`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Area` { `AREA`: toInteger(trim(row.`AREA`)) })
+  MATCH (target: `District` { `Rpt Dist No`: toInteger(trim(row.`Rpt Dist No`)) })
+  MERGE (source)-[r: `Contains`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Case` { `DR_NO`: toInteger(trim(row.`DR_NO`)) })
+  MATCH (target: `District` { `Rpt Dist No`: toInteger(trim(row.`Rpt Dist No`)) })
+  MERGE (source)-[r: `Reported_in`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Victim` { `Victim_id`: toInteger(trim(row.`Victim_id`)) })
+  MATCH (target: `Case` { `DR_NO`: toInteger(trim(row.`DR_NO`)) })
+  MERGE (source)-[r: `Reports`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Case` { `DR_NO`: toInteger(trim(row.`DR_NO`)) })
+  MATCH (target: `Victim` { `Victim_id`: toInteger(trim(row.`Victim_id`)) })
+  MERGE (source)-[r: `Reported_by`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Weapon` { `Weapon Used Cd`: toInteger(trim(row.`Weapon Used Cd`)) })
+  MATCH (target: `Case` { `DR_NO`: toInteger(trim(row.`DR_NO`)) })
+  MERGE (source)-[r: `Used_in`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Case` { `DR_NO`: toInteger(trim(row.`DR_NO`)) })
+  MATCH (target: `Weapon` { `Weapon Used Cd`: toInteger(trim(row.`Weapon Used Cd`)) })
+  MERGE (source)-[r: `Committed_by`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Case` { `DR_NO`: toInteger(trim(row.`DR_NO`)) })
+  MATCH (target: `Premise` { `Premis Cd`: toInteger(trim(row.`Premis Cd`)) })
+  MERGE (source)-[r: `Involves_premise`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Case` { `DR_NO`: toInteger(trim(row.`DR_NO`)) })
+  MATCH (target: `Crime` { `Crm Cd`: toInteger(trim(row.`Crm Cd`)) })
+  MERGE (source)-[r: `Type`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Victim` { `Victim_id`: toInteger(trim(row.`Victim_id`)) })
+  MATCH (target: `Crime` { `Crm Cd`: toInteger(trim(row.`Crm Cd`)) })
+  MERGE (source)-[r: `Affected_by`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Crime` { `Crm Cd`: toInteger(trim(row.`Crm Cd`)) })
+  MATCH (target: `Victim` { `Victim_id`: toInteger(trim(row.`Victim_id`)) })
+  MERGE (source)-[r: `Committed_against`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Weapon` { `Weapon Used Cd`: toInteger(trim(row.`Weapon Used Cd`)) })
+  MATCH (target: `Victim` { `Victim_id`: toInteger(trim(row.`Victim_id`)) })
+  MERGE (source)-[r: `Used_against`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Victim` { `Victim_id`: toInteger(trim(row.`Victim_id`)) })
+  MATCH (target: `Weapon` { `Weapon Used Cd`: toInteger(trim(row.`Weapon Used Cd`)) })
+  MERGE (source)-[r: `Offended_by`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Crime` { `Crm Cd`: toInteger(trim(row.`Crm Cd`)) })
+  MATCH (target: `Area` { `AREA`: toInteger(trim(row.`AREA`)) })
+  MERGE (source)-[r: `Took_place_in`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Crime` { `Crm Cd`: toInteger(trim(row.`Crm Cd`)) })
+  MATCH (target: `Location` { `Location_id`: toInteger(trim(row.`Location_id`)) })
+  MERGE (source)-[r: `Took_place_at`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+
+LOAD CSV WITH HEADERS FROM ($file_path_root + $file_0) AS row
+WITH row 
+CALL {
+  WITH row
+  MATCH (source: `Crime` { `Crm Cd`: toInteger(trim(row.`Crm Cd`)) })
+  MATCH (target: `Weapon` { `Weapon Used Cd`: toInteger(trim(row.`Weapon Used Cd`)) })
+  MERGE (source)-[r: `Involves_weapon`]->(target)
+} IN TRANSACTIONS OF 10000 ROWS;
+----
+
+//graph
+
+'''
+
+== Path Queries 
+
+Performing some of the path queries on the above data model is demonstrated below.
+
+==== Which district has the most number of cases reported.
+
+[source,cypher]
+----
+MATCH (c:Case)-[:Reported_in]->(d:District)
+WITH d, count(c) AS caseCount
+
+// Step 2: Match cases to districts again and use the maximum case count
+WITH max(caseCount) AS maxCases
+MATCH (c:Case)-[:Reported_in]->(d:District)
+WITH d, count(c) AS caseCount, maxCases
+WHERE caseCount = maxCases
+RETURN d.`Rpt Dist No` AS District, caseCount AS NumberOfCases;----
+
+//output
+//table
+
+==== Which crime is mostly committed against victims of one descent?
+
+[source,cypher]
+----
+// Step 1: Calculate the most common crime type committed against victims of each descent
+MATCH (c:Case)-[:Reported_by]->(v:Victim), (c)-[:Type]->(crime:Crime)
+WITH v.`Vict Descent` AS victimDescent, crime.`Crm Cd` AS crimeCode, crime.`Crm Cd Desc` AS crimeDescription, count(c) AS crimeCount
+// Group cases by victim descent, crime type, and count the number of cases for each
+WITH victimDescent, crimeCode, crimeDescription, crimeCount
+// Calculate the maximum crime count for each victim descent
+WITH victimDescent, max(crimeCount) AS maxCrimeCount
+// Filter the results to include only the most common crime type for each descent
+MATCH (c:Case)-[:Reported_by]->(v:Victim), (c)-[:Type]->(crime:Crime)
+WHERE v.`Vict Descent` = victimDescent
+WITH victimDescent, crime.`Crm Cd` AS crimeCode, crime.`Crm Cd Desc` AS crimeDescription, count(c) AS crimeCount, maxCrimeCount
+WHERE crimeCount = maxCrimeCount
+// Return the victim descent, crime code, crime description, and the number of cases
+RETURN victimDescent AS VictimDescent, crimeCode AS CrimeCode, crimeDescription AS CrimeDescription, crimeCount AS NumberOfCases
+ORDER BY NumberOfCases DESC
+----
+
+//output
+//table
+
+====  What is the weapon used in most cases in Los Angeles?
+
+[source, cypher]
+----
+// Step 1: Calculate the maximum number of cases in which any weapon was used
+MATCH (c:Case)-[:Committed_by]->(w:Weapon)
+WITH w.`Weapon Used Cd` AS weaponCode, w.`Weapon Desc` AS weaponDescription, count(c) AS caseCount
+WITH max(caseCount) AS maxCases
+
+// Step 2: Find the weapon(s) used in the maximum number of cases
+MATCH (c:Case)-[:Committed_by]->(w:Weapon)
+WITH w.`Weapon Used Cd` AS weaponCode, w.`Weapon Desc` AS weaponDescription, count(c) AS caseCount, maxCases
+WHERE caseCount = maxCases
+// Return the weapon code, weapon description, and the number of cases
+RETURN weaponCode AS WeaponCode, weaponDescription AS WeaponDescription, caseCount AS NumberOfCases;
+----
+
+//output
+//table
+
+== Projections Made
+
+The following can be an example of how we are going to use projections in our graph for GDS (Graph Data Science Library):
+
+==== Case-Crime Projection
+[source, cypher]
+----
+CALL gds.graph.project(
+  'case-crime-projection',
+  ['Case', 'Crime'],
+  {
+    Type: {}
+  }
+)
+----
+
+== 
+//output
+//table
+
+== Machine Learning
+The node classification and link prediction queries can be found in the link provided: https://github.com/MuhammadAreebKazmi2/Graph-Data-Science/tree/main/Project/Queries
