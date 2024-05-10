@@ -22,12 +22,14 @@ CALL gds.graph.project(
 );
 
 CALL gds.pageRank.stream('areaGraph', {
-    maxIterations: 20, 
+    maxIterations: 20,
     dampingFactor: 0.85
 })
 YIELD nodeId, score
-//-- Convert the nodeId back to the node and retrieve the AREA property (or other relevant properties as needed)
-RETURN gds.util.asNode(nodeId).AREA AS areaId, score
+// Convert the nodeId back to the node and retrieve the AREA property and AREA NAME property
+RETURN gds.util.asNode(nodeId).AREA AS areaId, 
+       gds.util.asNode(nodeId).`AREA NAME` AS areaName, 
+       score
 ORDER BY score DESC
 LIMIT 10;
 // Area 1, 5, 9 are highly important
