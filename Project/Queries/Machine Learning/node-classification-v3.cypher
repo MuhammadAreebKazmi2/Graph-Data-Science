@@ -15,6 +15,10 @@ SET v.Vict_Sex_encoded = CASE  v.`Vict Sex`
     WHEN null THEN 4
     END;
 
+MATCH (v:Victim)
+WHERE v.Vict_Sex_encoded IS NULL OR v.Vict_Sex_encoded = 'NaN'
+DETACH DELETE v;
+
 CALL gds.graph.project(
   'victim-graph',
   {
@@ -56,7 +60,7 @@ YIELD splitConfig
 CALL gds.beta.pipeline.nodeClassification.addRandomForest('pipeline-2', {numberOfDecisionTrees: 10})
 YIELD parameterSpace
 
-CALL gds.alpha.pipeline.nodeClassification.addMLP('pipeline-2', {classWeights: [0.4,0.3,0.3, 0.3, 0.3], focusWeight: 0.5})
+CALL gds.alpha.pipeline.nodeClassification.addMLP('pipeline-2', {classWeights: [0.4,0.3,0.3, 0.3], focusWeight: 0.5})
 YIELD parameterSpace
 
 CALL gds.beta.pipeline.nodeClassification.addLogisticRegression('pipeline-2', {maxEpochs: 500, penalty: {range: [1e-4, 1e2]}})
