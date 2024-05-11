@@ -26,7 +26,7 @@ CALL gds.beta.pipeline.nodeClassification.addNodeProperty(
 )
 YIELD name, nodePropertySteps
 
-CALL gds.beta.pipeline.nodeClassification.selectFeatures('pipeline-2', ['scaledSizes', 'Vict Age', 'Vict Sex'])
+CALL gds.beta.pipeline.nodeClassification.selectFeatures('pipeline-2', ['scaledSizes', 'Vict Age', 'Vict_Sex_encoded'])
 YIELD name, featureProperties
 
 CALL gds.beta.pipeline.nodeClassification.configureSplit('pipeline-2', {
@@ -39,7 +39,7 @@ YIELD splitConfig
 CALL gds.beta.pipeline.nodeClassification.addRandomForest('pipeline-2', {numberOfDecisionTrees: 10})
 YIELD parameterSpace
 
-CALL gds.alpha.pipeline.nodeClassification.addMLP('pipeline-2', {classWeights: [0.4,0.3,0.3, 0.3, 0.3], focusWeight: 0.5})
+CALL gds.alpha.pipeline.nodeClassification.addMLP('pipeline-2', {classWeights: [0.4,0.3,0.3, 0.3], focusWeight: 0.5})
 YIELD parameterSpace
 
 CALL gds.beta.pipeline.nodeClassification.addLogisticRegression('pipeline-2', {maxEpochs: 500, penalty: {range: [1e-4, 1e2]}})
@@ -49,6 +49,10 @@ RETURN parameterSpace.RandomForest AS randomForestSpace, parameterSpace.Logistic
 CALL gds.alpha.pipeline.nodeClassification.configureAutoTuning('pipeline-2', {
   maxTrials: 2
 }) 
+
+MATCH (v:Victim)
+WHERE v.Vict_Sex_encoded IS NULL OR v.Vict_Sex_encoded = 'NaN'
+DETACH DELETE v;
 
 
 CALL gds.beta.pipeline.nodeClassification.train('victim-graph', {
