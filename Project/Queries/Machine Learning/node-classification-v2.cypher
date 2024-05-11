@@ -92,4 +92,43 @@ RETURN
   [cand IN modelSelectionStats.modelCandidates | cand.metrics.ACCURACY.validation.avg] AS validationScores
 
 
+CALL gds.beta.pipeline.nodeClassification.predict.stream(
+    'location-project',
+    {
+        modelName: 'location-pipeline-model',
+        includePredictedProbabilities: true,
+        targetNodeLabels: ['unknownLocation']
+    }
+)
+YIELD nodeId, predictedClass, predictedProbabilities
+WITH gds.util.asNode(nodeId) AS LocationNode, predictedClass, predictedProbabilities
+RETURN
+  LocationNode AS classifiedLocation,
+  predictedClass,
+  CASE 
+    WHEN predictedProbabilities IS NULL THEN null
+    ELSE predictedProbabilities[predictedClass]
+  END AS confidence
+ORDER BY classifiedLocation;
+
+
+CALL gds.beta.pipeline.nodeClassification.predict.mutate(
+    'location-project',
+    {
+        modelName: 'location-pipeline-model',
+        predictedProbabilityProperty: 'predictedProbabilities',
+        targetNodeLabels: ['unknownLocation'],
+        mutateProperty: 'predictedClass'
+    }
+)
+
+CALL gds.beta.pipeline.nodeClassification.predict.write(
+    'location-project',
+    {
+        modelName: 'location-pipeline-model',
+        predictedProbabilityProperty: 'predictedProbabilities',
+        targetNodeLabels: ['unknownLocation'],
+        writeProperty: 'predictedClass'
+    }
+)
 
