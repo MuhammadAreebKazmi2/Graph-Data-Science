@@ -1,89 +1,20 @@
-CALL gds.graph.project(
-    'case-project',
-    {
-        Case: {
-            properties: 'DR_NO'
-        },
-        Crime: {
-            properties: 'Crm Cd'
-        }
-    },
-    {
-        TYPE: {
-            type: 'Type'
-        }
-    }
-)
-
-
-Call gds.beta.pipeline.nodeClassification.create('case-pipeline')
-
-
-CALL gds.pipeline.list('case-pipeline')
-
-
-CALL gds.beta.pipeline.nodeClassification.selectFeatures("case-pipeline", "DR_NO"
-);
-
-
-CALL gds.beta.pipeline.nodeClassification.configureSplit("case-pipeline", {
-    testFraction: 0.2,
-    validationFolds: 5
-});
-
-
-
-CALL gds.beta.pipeline.nodeClassification.addLogisticRegression("case-pipeline", {
-    maxEpochs: 200,
-    penalty: {
-        range: [0.0, 0.5]
-    }
-});
-
-
-CALL gds.beta.pipeline.nodeClassification.train.estimate(
-    'case-project',
-    {
-        pipeline: "case-pipeline",
-        modelName: "case-pipeline-model",
-        targetNodeLabels: ["Case"],
-        targetProperty: "DR_NO",
-        metrics: ["F1_WEIGHTED"],
-        randomSeed: 42,
-        concurrency: 4
-    }
-);
-
-
-CALL gds.beta.pipeline.nodeClassification.train(
-    'case-project',
-    {
-        pipeline: "case-pipeline",
-        modelName: "case-pipeline-model",
-        targetNodeLabels: ["Case"],
-        targetProperty: "DR_NO",
-        metrics: ["F1_WEIGHTED"],
-        randomSeed: 42,
-        concurrency: 4
-    }
-);
-
-
-CALL gds.beta.pipeline.nodeClassification.predict.stream(
-    'case-project',
-    {
-        modelName: 'case-pipeline-model',
-        targetNodeLabels: ['Case'],
-        includePredictedProbabilities: true
-    }
-)
-YIELD nodeId, predictedLabel, predictedProbabilities
-RETURN nodeId, predictedLabel, predictedProbabilities;
-
-
-
-
-
-
-
+MATCH (v:Victim)
+SET v.Vict_Descent_encoded = 
+  CASE v.`Vict Descent`
+    WHEN 'W' THEN 0
+    WHEN 'H' THEN 1
+    WHEN 'A' THEN 2
+    WHEN 'B' THEN 3
+    WHEN 'O' THEN 4
+    WHEN 'X' THEN 5
+    WHEN 'C' THEN 6
+    WHEN 'F' THEN 7
+    WHEN 'K' THEN 8
+    WHEN 'I' THEN 9
+    WHEN 'V' THEN 10
+    WHEN 'Z' THEN 11
+    WHEN 'J' THEN 12
+    WHEN 'P' THEN 13
+    ELSE 14  // Handle any other values if present
+  END;
 
